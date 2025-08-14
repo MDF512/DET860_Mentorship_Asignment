@@ -1,39 +1,11 @@
-"""
-Code will take in a list of names of POC (Mentors) form a csv and a list of mentees with preferences from a second csv.
-these will be stored in a dataframe
-
-The code will generate a 3rd dataframe to choose the final selection this will be a 2 colum dataframe with mentee in the
-first column and mentor in the second column.
-
-A dictionary will also be created listing each mentor and the set number of mentees they can take.
-
-A function will iterate though each mentor and then each mentee counting how many mentees selected them for their first
-choice. If the number is less than a set amount the mentees is assigned the mentor in the 3rd dataframe. T If there are more than the allowed amount, the list will be randomized, and the
-first X number will be selected. he Mentees are dropped from the preferences dataframe. The dictionary for how many
-mentees they can take is updated.
-
-Mentors that are "filled up" are dropped from the list of mentors. This is done by iterating through the dictionary.
-
-The selection function is rerun for second, third and fourth choices.
-
-There is a verification after each run to verify there are still mentors and mentees.
-
-A verification is made to ensure that all mentors have at lease one mentee. If they do not, the preference data frame
-is randomized and searched for second preference, third, fourth preference, and so on. The first hit is moved to them.
-This verification is run in a while loop till all mentors have a mentee.
-
-when the mentor is assigned a score is also assigned 15 points for first, 10 for second, 7 for third, 5 for fourth.
-at the end the score is totaled. and becomes the title of the exported csv. The programs runs X times and the highest
-score is selected.
-"""
 import pandas as pd
 import random
 
 # -----------------------------
 # CONFIG
 # -----------------------------
-MENTORS_CSV = "mentors.csv"          # single column: 'Mentor'
-MENTEES_CSV = "mentees.csv"          # columns: 'Mentee', 'First', 'Second', 'Third', 'Fourth'
+MENTORS_CSV = "example_mentors.csv"          # single column: 'Mentor'
+MENTEES_CSV = "example_mentees.csv"          # columns: 'Mentee', 'First', 'Second', 'Third', 'Fourth'
 MENTOR_CAPACITY = 3                  # default mentees per mentor
 ROUNDS = 10                          # how many times to run for best score
 SCORES = {1: 15, 2: 10, 3: 7, 4: 5}  # preference scoring
@@ -235,7 +207,6 @@ def format_and_export(assignments):
                 mentee_rows.append({"Mentee": mentee, "Mentor": mentor})
 
     mentee_results = pd.DataFrame(mentee_rows)
-    mentee_results.to_csv("mentee_results.csv", index=False)
 
     mentor_df = assignments.copy()
     mentor_df["Mentees"] = mentor_df[
@@ -245,7 +216,14 @@ def format_and_export(assignments):
 
     # Keep only Mentor and Mentees columns
     mentor_results = mentor_df[["Mentor", "Mentees"]]
-    mentor_results.to_csv("mentor_results.csv", index=False)
+
+    # Create an Excel file with multiple sheets
+    with pd.ExcelWriter("Final Results.xlsx") as writer:
+        mentor_results.to_excel(writer, sheet_name="By Mentors", index=False)
+        mentee_results.to_excel(writer, sheet_name="Mentees", index=False)
+
+    print("Combined Excel file created: Final Results.xlsx")
+
 
 # -----------------------------
 # MAIN RUN LOOP

@@ -2,8 +2,8 @@ import pandas as pd
 import random
 
 # Parameters
-NUM_MENTORS = 30  # Total number of mentors to generate
-NUM_MENTEES = 70  # Total number of mentees to generate
+NUM_MENTORS = 31  # Total number of mentors to generate
+NUM_MENTEES = 99  # Total number of mentees to generate
 
 
 def main():

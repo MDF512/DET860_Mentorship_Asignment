@@ -1,6 +1,8 @@
 import pandas as pd
 import random
 
+from tester import count
+
 # -----------------------------
 # CONFIG
 # -----------------------------
@@ -73,18 +75,26 @@ def assign_mentors(mentors_df, mentees_df):
         venerable_to_move_mentees = []
         mentors_0 = []
         mentors_1 = []
+        mentors_2 = []
         for index, row in working_df.iterrows():
             if working_df.loc[index, "Count"] > working_df.loc[index, "Max"]:
-                venerable_to_move_mentees += working_df.loc[index, 'First_Choice']
+                if len(working_df.loc[index, 'First_Choice']) != 0:
+                    venerable_to_move_mentees += working_df.loc[index, 'First_Choice']
+                elif len(working_df.loc[index, 'Second_Choice']) != 0:
+                    venerable_to_move_mentees += working_df.loc[index, 'Second_Choice']
+                else:
+                    raise Exception("Unable to select cadets to move")
             if working_df.loc[index, "Count"] == 0:
                 mentors_0.append(working_df.loc[index, 'Mentor'])
             if working_df.loc[index, "Count"] == 1:
                 mentors_1.append(working_df.loc[index, 'Mentor'])
+            if working_df.loc[index, "Count"] == 2:
+                mentors_2.append(working_df.loc[index, 'Mentor'])
 
         if len(venerable_to_move_mentees) == 0:
             return False
-        elif len(mentors_1) == 0 and len(mentors_0) == 0:
-            # This is where someone has too many but everyone has at least 2. then randomly pick on and assign to second
+        elif len(mentors_1) == 0 and len(mentors_0) == 0 and len(mentors_2) == 0:
+            # This is where someone has too many but everyone has at least 3. then randomly pick on and assign to second
             mentee = random.choice(venerable_to_move_mentees)
             mask = mentees_df["Mentee"] == mentee
             second = mentees_df.loc[mask, "Second"].values[0]
@@ -103,7 +113,7 @@ def assign_mentors(mentors_df, mentees_df):
         for mentee in venerable_to_move_mentees:
             mask = mentees_df["Mentee"] == mentee
             second = mentees_df.loc[mask, "Second"].values[0]
-            if second in mentors_0 or second in mentors_1:
+            if second in mentors_0 or second in mentors_1 or second in mentors_2:
                 for index,row in working_df.iterrows():
                     if mentee in row["First_Choice"]:
                         old_mentor = row["Mentor"]
@@ -118,7 +128,7 @@ def assign_mentors(mentors_df, mentees_df):
         for mentee in venerable_to_move_mentees:
             mask = mentees_df["Mentee"] == mentee
             third = mentees_df.loc[mask, "Third"].values[0]
-            if third in mentors_0 or third in mentors_1:
+            if third in mentors_0 or third in mentors_1 or third in mentors_2:
                 for index, row in working_df.iterrows():
                     if mentee in row["First_Choice"]:
                         old_mentor = row["Mentor"]
@@ -132,7 +142,7 @@ def assign_mentors(mentors_df, mentees_df):
         for mentee in venerable_to_move_mentees:
             mask = mentees_df["Mentee"] == mentee
             fourth = mentees_df.loc[mask, "Fourth"].values[0]
-            if fourth in mentors_0 or fourth in mentors_1:
+            if fourth in mentors_0 or fourth in mentors_1 or fourth in mentors_2:
                 for index, row in working_df.iterrows():
                     if mentee in row["First_Choice"]:
                         old_mentor = row["Mentor"]
@@ -164,9 +174,14 @@ def assign_mentors(mentors_df, mentees_df):
 
 
     need_to_move_mentees = True #assume there are some to move
+    move_count = 0
     while need_to_move_mentees:
         need_to_move_mentees = move_mentees()
         working_df = sort_and_tally_max(working_df)
+        move_count += 1
+        print("moved_a_mentee")
+        if move_count > 1000:
+            raise Exception("Too many moves")
 
     for index,_ in working_df.iterrows():
         assert working_df.loc[index, "Count"] == working_df.loc[index, "Max"], "ERROR: Unable to properly assign mentees"
@@ -234,6 +249,7 @@ def main():
     final_assignments = assign_mentors(mentors_df, mentees_df)
     stats(final_assignments)
     format_and_export(final_assignments)
+    input("Press Any key to exit")
 
 if __name__ == "__main__":
     main()
